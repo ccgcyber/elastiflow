@@ -13,6 +13,7 @@ Refer to the following compatibility chart to choose a release of ElastiFlow&tra
 
 Elastic Stack | ElastiFlow&trade; 1.x | ElastiFlow&trade; 2.x | ElastiFlow&trade; 3.x
 :---:|:---:|:---:|:---:
+6.3 |  |  | &#10003;
 6.2 | &#10003; | &#10003; | &#10003;
 6.1 | &#10003; | &#10003; |
 6.0 | &#10003; | &#10003; |
@@ -41,7 +42,7 @@ The above recommendations are a starting point. Once you are up and running you 
 
 > I plan to do some additional benchmarking soon, and will update the above table based on those results.
 
-## Setting-up-Elasticsearch
+## Setting up Elasticsearch
 Currently there is no specific configuration required for Elasticsearch. As long as Kibana and Logstash can talk to your Elasticsearch cluster you should be ready to go. The index template required by Elasticsearch will be uploaded by Logstash.
 
 At high ingest rates (>10K flows/s), or for data redundancy and high availability, a multi-node cluster is recommended.
@@ -71,11 +72,12 @@ LS_HOME/bin/logstash-plugin update logstash-filter-dns
 ```
 
 ### 3. Copy the pipeline files to the Logstash configuration path.
-There are four sets of configuration files provided within the `logstash/elastiflow` folder:
+There are five sets of configuration files provided within the `logstash/elastiflow` folder:
 ```
 logstash
   `- elastiflow
        |- conf.d  (contains the logstash pipeline)
+       |- definitions  (custom Netflow and IPFIX field definitions)
        |- dictionaries (yaml files used to enrich raw flow data)
        |- geoipdbs  (contains GeoIP databases)
        `- templates  (contains index templates)
@@ -85,9 +87,9 @@ Copy the `elastiflow` directory to the location of your Logstash configuration f
 
 Environment Variable | Description | Default Value
 --- | --- | ---
-ELASTIFLOW_DICT_PATH | The path where the dictionary files are located | /etc/logstash/elastiflow/dictionaries
+ELASTIFLOW_DICT_PATH | The path where dictionary files are located | /etc/logstash/elastiflow/dictionaries
 ELASTIFLOW_TEMPLATE_PATH | The path to where index templates are located | /etc/logstash/elastiflow/templates
-ELASTIFLOW_GEOIP_DB_PATH | The path where the GeoIP DBs are located | /etc/logstash/elastiflow/geoipdbs
+ELASTIFLOW_GEOIP_DB_PATH | The path where GeoIP DBs are located | /etc/logstash/elastiflow/geoipdbs
 
 ### 4. Setup environment variable helper files
 Rather than directly editing the pipeline configuration files for your environment, environment variables are used to provide a single location for most configuration options. These environment variables will be referred to in the remaining instructions. A [reference](#environment-variable-reference) of all environment variables can be found [here](#environment-variable-reference).
@@ -141,23 +143,66 @@ Environment Variable | Description | Default Value
 --- | --- | ---
 ELASTIFLOW_NETFLOW_UDP_WORKERS | The number of Netflow input threads | 4
 ELASTIFLOW_NETFLOW_UDP_QUEUE_SIZE | The number of unprocessed Netflow UDP packets the input can buffer | 4096
+ELASTIFLOW_NETFLOW_UDP_RCV_BUFF | The socket receive buffer size (bytes) for Netflow | 33554432
 ELASTIFLOW_SFLOW_UDP_WORKERS | The number of sFlow input threads | 4
 ELASTIFLOW_SFLOW_UDP_QUEUE_SIZE | The number of unprocessed sFlow UDP packets the input can buffer | 4096
+ELASTIFLOW_SFLOW_UDP_RCV_BUFF | The socket receive buffer size (bytes) for sFlow | 33554432
 ELASTIFLOW_IPFIX_UDP_WORKERS | The number of IPFIX input threads | 4
 ELASTIFLOW_IPFIX_UDP_QUEUE_SIZE | The number of unprocessed IPFIX UDP packets the input can buffer | 4096
+ELASTIFLOW_IPFIX_UDP_RCV_BUFF | The socket receive buffer size (bytes) for IPFIX | 33554432
 
 > WARNING! Increasing `queue_size` will increase heap_usage. Make sure have configured JVM heap appropriately as specified in the [Requirements](#requirements)
 
+#### 6.a. Using Custom Netflow and IPFIX Field Definitions
+To properly decode flows from some devices it may be necessary to use customized field definitions. This is achieved by uncommenting one or both of the following lines in the pipeline's input.
+
+```
+#netflow_definitions => "${ELASTIFLOW_DEFINITION_PATH:/etc/logstash/elastiflow/definitions}/netflow.yml"
+#ipfix_definitions => "${ELASTIFLOW_DEFINITION_PATH:/etc/logstash/elastiflow/definitions}/ipfix.yml"
+```
+
+The path to the custom field definitions is configured by setting the following environment variable:
+
+Environment Variable | Description | Default Value
+--- | --- | ---
+ELASTIFLOW_DEFINITION_PATH | The path where custom field definitions are located | /etc/logstash/elastiflow/definitions
+
+The included custom field definitions add support for the following devices:
+* Riverbed WAN Optimizers
+
 ### 7. Configure Elasticsearch output
-Obviously the data needs to land in Elasticsearch, so you need to tell Logstash where to send it. This is done by setting these environment variables:
+Obviously the data needs to land in Elasticsearch, so you need to tell Logstash where to send it.
+
+The default is to send data to only a single Elasticsearch node. This node is specified using the following environment variable:
 
 Environment Variable | Description | Default Value
 --- | --- | ---
 ELASTIFLOW_ES_HOST | The Elasticsearch host to which the output will send data | 127.0.0.1:9200
+
+Optionally Logstash can be configured to use an array of three Elasticsearch nodes. This is done by completing the following steps:
+
+1. Rename `30_output_10_single.logstash.conf` to `30_output_10_single.logstash.conf.disabled`
+2. Rename `30_output_20_multi.logstash.conf.disabled` to `30_output_20_multi.logstash.conf`
+3. Set the following environment variables:
+
+Environment Variable | Description | Default Value
+--- | --- | ---
+ELASTIFLOW_ES_HOST_1 | The first Elasticsearch host to which the output will send data | 127.0.0.1:9200
+ELASTIFLOW_ES_HOST_2 | The second Elasticsearch host to which the output will send data | 127.0.0.2:9200
+ELASTIFLOW_ES_HOST_3 | The third Elasticsearch host to which the output will send data | 127.0.0.3:9200
+
+To complete the setup of the Elasticsearch output, configure the following environment variables as required for your environment:
+
+Environment Variable | Description | Default Value
+--- | --- | ---
 ELASTIFLOW_ES_USER | The password for the connection to Elasticsearch | elastic
 ELASTIFLOW_ES_PASSWD | The username for the connection to Elasticsearch | changeme
+ELASTIFLOW_ES_SSL_ENABLE | Enable or disable SSL connection to Elasticsearch | false
+ELASTIFLOW_ES_SSL_VERIFY | Enable or disable verification of the SSL certificate. If enabled, the output must be edited to set the path to the certificate. | false
 
 > If you are only using the open-source version of Elasticsearch, it will ignore the username and password. In that case just leave the defaults.
+
+> If ELASTIFLOW_ES_SSL_ENABLE and ELASTIFLOW_ES_SSL_VERIFY are both `true`, you must uncomment the `cacert` option in the Elasticsearch output and set the path to the certificate.
 
 ### 8. Enable DNS name resolution (optional)
 In the past it was recommended to avoid DNS queries as the latency costs of such lookups had a devastating effect on throughput. While the Logstash DNS filter provides a caching mechanism, its use was not recommended. When the cache was enabled all lookups were performed synchronously. If a name server failed to respond, all other queries were stuck waiting until the query timed out. The end result was even worse performance.
@@ -189,6 +234,12 @@ The application names which correspond to values of these IDs is vendor-specific
 ```
 > Currently supported is Cisco's NBAR2 and Fortinet's FortiOS. If you have a device that you would like added, I will need a mapping of Application IDs to names. This can often be extracted from the device's configuration. I would love to be able to build up a large knowledge base of such mappings.
 
+You can also define a default source type value by setting the following environment variable:
+
+Environment Variable | Description | Default Value
+--- | --- | ---
+ELASTIFLOW_DEFAULT_APPID_SRCTYPE | Sets the default source type for translating the App IDs to names. Valid values are `cisco_nbar2` and `fortinet` | __UNKNOWN
+
 > The nDPI detected application name produced by nProbe is also supported as of ElastiFlow&trade; v3.0.3. No specific configuration of ElastiFlow&trade; is necessary. However, nProbe must be configured with a template that sends this data. An nProbe configuration file that works well with ElastiFlow&trade; is available [HERE](https://gist.github.com/robcowart/afd538026db29ee96dd9c495efb52ea6).
 
 Once configured ElastiFlow&trade; will resolve the ID to an application name, which will be available in the dashboards.
@@ -207,15 +258,15 @@ Logstash takes a little time to start... BE PATIENT!
 
 If using Netflow v9 or IPFIX you will likely see warning messages related to the flow templates not yet being received. They will disappear after templates are received from the network devices, which should happen every few minutes. Some devices can take a bit longer to send templates. Fortinet in particular send templates rather infrequently.
 
-Logstash is setup is now complete. If you are receiving flow data, you should have an `elastiflow-` daily index in Elasticsearch.
+Logstash setup is now complete. If you are receiving flow data, you should have an `elastiflow-` daily index in Elasticsearch.
 
 ## Setting up Kibana
-An API (yet undocumented) is available to import and export Index Patterns. The JSON file which contains the Index Pattern configuration is `kibana/elastiflow.index_pattern-json`. To setup the `elastiflow-*` Index Pattern run the following command:
+An API (yet undocumented) is available to import and export Index Patterns. The JSON file which contains the Index Pattern configuration is `kibana/elastiflow.index_pattern.json`. To setup the `elastiflow-*` Index Pattern run the following command:
 ```
 curl -X POST -u USERNAME:PASSWORD http://KIBANASERVER:5601/api/saved_objects/index-pattern/elastiflow-* -H "Content-Type: application/json" -H "kbn-xsrf: true" -d @/PATH/TO/elastiflow.index_pattern.json
 ```
 
-Finally the vizualizations and dashboards can be loaded into Kibana by importing the `elastiflow.dashboards.json` file from within the Kibana UI. This is done from the Management - > Saved Objects page.
+Finally the vizualizations and dashboards can be loaded into Kibana by importing the `elastiflow.dashboards.<VER>.json` file from within the Kibana UI. This is done from the Management - > Saved Objects page. There are separate dashboard import files for version 6.2.x and 6.3.x of Kibana. Select the file that corresponds to your version of Kibana.
 
 ### Recommended Kibana Advanced Settings
 You may find that modifying a few of the Kibana advanced settings will produce a more user-friendly experience while using ElastiFlow&trade;. These settings are made in Kibana, under `Management -> Advanced Settings`.
@@ -266,13 +317,15 @@ The supported environment variables are:
 
 Environment Variable | Description | Default Value
 --- | --- | ---
-ELASTIFLOW_DICT_PATH | The path where the dictionary files are located | /etc/logstash/elastiflow/dictionaries
+ELASTIFLOW_DICT_PATH | The path where dictionary files are located | /etc/logstash/elastiflow/dictionaries
+ELASTIFLOW_DEFINITION_PATH | The path where custom field definitions are located | /etc/logstash/elastiflow/definitions
 ELASTIFLOW_TEMPLATE_PATH | The path to where index templates are located | /etc/logstash/elastiflow/templates
-ELASTIFLOW_GEOIP_DB_PATH | The path where the GeoIP DBs are located | /etc/logstash/elastiflow/geoipdbs
+ELASTIFLOW_GEOIP_DB_PATH | The path where GeoIP DBs are located | /etc/logstash/elastiflow/geoipdbs
 ELASTIFLOW_GEOIP_CACHE_SIZE | The size of the GeoIP query cache | 8192
 ELASTIFLOW_GEOIP_LOOKUP | Enable/Disable GeoIP lookups | true
 ELASTIFLOW_ASN_LOOKUP | Enable/Disable ASN lookups | true
 ELASTIFLOW_KEEP_ORIG_DATA | If set to `false` the original `netflow`, `ipfix` and `sflow` objects will be deleted prior to indexing. This can save disk space without affecting the provided dashboards. However the original flow fields will no longer be available if they are desired for additional analytics. | true
+ELASTIFLOW_DEFAULT_APPID_SRCTYPE | Sets the default source type for translating the App IDs to names. Valid values are `cisco_nbar2` and `fortinet` | __UNKNOWN
 ELASTIFLOW_RESOLVE_IP2HOST | Enable/Disable DNS requests | false
 ELASTIFLOW_NAMESERVER | The DNS server to which the dns filter should send requests | 127.0.0.1
 ELASTIFLOW_DNS_HIT_CACHE_SIZE | The cache size for successful DNS queries | 25000
@@ -280,6 +333,11 @@ ELASTIFLOW_DNS_HIT_CACHE_TTL | The time in seconds successful DNS queries are ca
 ELASTIFLOW_DNS_FAILED_CACHE_SIZE | The cache size for failed DNS queries | 75000
 ELASTIFLOW_DNS_FAILED_CACHE_TTL | The time in seconds failed DNS queries are cached | 3600
 ELASTIFLOW_ES_HOST | The Elasticsearch host to which the output will send data | 127.0.0.1:9200
+ELASTIFLOW_ES_HOST_1 | The first Elasticsearch host to which the output will send data | 127.0.0.1:9200
+ELASTIFLOW_ES_HOST_2 | The second Elasticsearch host to which the output will send data | 127.0.0.2:9200
+ELASTIFLOW_ES_HOST_3 | The third Elasticsearch host to which the output will send data | 127.0.0.3:9200
+ELASTIFLOW_ES_SSL_ENABLE | Enable or disable SSL connection to Elasticsearch | false
+ELASTIFLOW_ES_SSL_VERIFY | Enable or disable verification of the SSL certificate. If enabled, the output must be edited to set the path to the certificate. | false
 ELASTIFLOW_ES_USER | The password for the connection to Elasticsearch | elastic
 ELASTIFLOW_ES_PASSWD | The username for the connection to Elasticsearch | changeme
 ELASTIFLOW_NETFLOW_IPV4_HOST | The IP address on which to listen for Netflow messages | 0.0.0.0
@@ -288,6 +346,7 @@ ELASTIFLOW_NETFLOW_IPV6_HOST | The IP address on which to listen for Netflow mes
 ELASTIFLOW_NETFLOW_IPV6_PORT | The UDP port on which to listen for Netflow messages | 52055
 ELASTIFLOW_NETFLOW_UDP_WORKERS | The number of Netflow input threads | 4
 ELASTIFLOW_NETFLOW_UDP_QUEUE_SIZE | The number of unprocessed Netflow UDP packets the input can buffer | 4096
+ELASTIFLOW_NETFLOW_UDP_RCV_BUFF | The socket receive buffer size (bytes) for Netflow | 33554432
 ELASTIFLOW_NETFLOW_LASTSW_TIMESTAMP | Enable/Disable setting `@timestamp` with the value of netflow.last_switched | false
 ELASTIFLOW_NETFLOW_TZ | The timezone of netflow.last_switched | UTC
 ELASTIFLOW_SFLOW_IPV4_HOST | The IP address on which to listen for sFlow messages | 0.0.0.0
@@ -296,6 +355,7 @@ ELASTIFLOW_SFLOW_IPV6_HOST | The IP address on which to listen for sFlow message
 ELASTIFLOW_SFLOW_IPV6_PORT | The UDP port on which to listen for sFlow messages | 56343
 ELASTIFLOW_SFLOW_UDP_WORKERS | The number of sFlow input threads | 4
 ELASTIFLOW_SFLOW_UDP_QUEUE_SIZE | The number of unprocessed sFlow UDP packets the input can buffer | 4096
+ELASTIFLOW_SFLOW_UDP_RCV_BUFF | The socket receive buffer size (bytes) for sFlow | 33554432
 ELASTIFLOW_IPFIX_TCP_IPV4_HOST | The IP address on which to listen for IPFIX messages via TCP | 0.0.0.0
 ELASTIFLOW_IPFIX_TCP_IPV4_PORT | The port on which to listen for IPFIX messages via TCP | 4739
 ELASTIFLOW_IPFIX_UDP_IPV4_HOST | The IP address on which to listen for IPFIX messages via UDP | 0.0.0.0
@@ -306,6 +366,7 @@ ELASTIFLOW_IPFIX_UDP_IPV6_HOST | The IP address on which to listen for IPFIX mes
 ELASTIFLOW_IPFIX_UDP_IPV6_PORT | The port on which to listen for IPFIX messages via UDP | 54739
 ELASTIFLOW_IPFIX_UDP_WORKERS | The number of IPFIX input threads | 4
 ELASTIFLOW_IPFIX_UDP_QUEUE_SIZE | The number of unprocessed IPFIX UDP packets the input can buffer | 4096
+ELASTIFLOW_IPFIX_UDP_RCV_BUFF | The socket receive buffer size (bytes) for IPFIX | 33554432
 
 # Recommended Setting for timepicker:quickRanges
 I recommend configuring `timepicker:quickRanges` for the setting below. The result will look like this:

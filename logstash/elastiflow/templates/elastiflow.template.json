@@ -1,7 +1,7 @@
 {
   "order": 0,
-  "version": 30003,
-  "index_patterns": "elastiflow-3.0.3-*",
+  "version": 30202,
+  "index_patterns": "elastiflow-3.2.2-*",
   "settings": {
     "index": {
       "number_of_shards": 3,
@@ -10513,6 +10513,134 @@
           }
         },
         {
+          "netflow.rb_cfe_inpath_addr": {
+            "path_match": "netflow.rb_cfe_inpath_addr",
+            "mapping": {
+              "type": "ip"
+            }
+          }
+        },
+        {
+          "netflow.rb_cfe_tcp_port": {
+            "path_match": "netflow.rb_cfe_tcp_port",
+            "mapping": {
+              "type": "long"
+            }
+          }
+        },
+        {
+          "netflow.rb_cfe_tcp_port_name": {
+            "path_match": "netflow.rb_cfe_tcp_port_name",
+            "mapping": {
+              "type": "keyword"
+            }
+          }
+        },
+        {
+          "netflow.rb_fe_type": {
+            "path_match": "netflow.rb_fe_type",
+            "mapping": {
+              "type": "keyword"
+            }
+          }
+        },
+        {
+          "netflow.rb_outer_inpath_addr": {
+            "path_match": "netflow.rb_outer_inpath_addr",
+            "mapping": {
+              "type": "ip"
+            }
+          }
+        },
+        {
+          "netflow.rb_outer_tcp_port": {
+            "path_match": "netflow.rb_outer_tcp_port",
+            "mapping": {
+              "type": "long"
+            }
+          }
+        },
+        {
+          "netflow.rb_outer_tcp_port_name": {
+            "path_match": "netflow.rb_outer_tcp_port_name",
+            "mapping": {
+              "type": "keyword"
+            }
+          }
+        },
+        {
+          "netflow.rb_passthru_reason": {
+            "path_match": "netflow.rb_passthru_reason",
+            "mapping": {
+              "type": "keyword"
+            }
+          }
+        },
+        {
+          "netflow.rb_retrans_bytes": {
+            "path_match": "netflow.rb_retrans_bytes",
+            "mapping": {
+              "type": "long"
+            }
+          }
+        },
+        {
+          "netflow.rb_retrans_pkts": {
+            "path_match": "netflow.rb_retrans_pkts",
+            "mapping": {
+              "type": "long"
+            }
+          }
+        },
+        {
+          "netflow.rb_sfe_inpath_addr": {
+            "path_match": "netflow.rb_sfe_inpath_addr",
+            "mapping": {
+              "type": "ip"
+            }
+          }
+        },
+        {
+          "netflow.rb_sfe_tcp_port": {
+            "path_match": "netflow.rb_sfe_tcp_port",
+            "mapping": {
+              "type": "long"
+            }
+          }
+        },
+        {
+          "netflow.rb_sfe_tcp_port_name": {
+            "path_match": "netflow.rb_sfe_tcp_port_name",
+            "mapping": {
+              "type": "keyword"
+            }
+          }
+        },
+        {
+          "netflow.rb_tcp_conn_rtt": {
+            "path_match": "netflow.rb_tcp_conn_rtt",
+            "mapping": {
+              "type": "long"
+            }
+          }
+        },
+        {
+          "netflow.rb_unk_51130": {
+            "path_match": "netflow.rb_unk_51130",
+            "mapping": {
+              "type": "long"
+            }
+          }
+        },
+        {
+          "netflow.rb_wan_visibility": {
+            "path_match": "netflow.rb_wan_visibility",
+            "mapping": {
+              "type": "keyword"
+            }
+          }
+        },
+        {
           "netflow.relativeError": {
             "path_match": "netflow.relativeError",
             "mapping": {
@@ -12034,6 +12162,9 @@
         "@timestamp": {
           "type": "date"
         },
+        "@version": {
+          "type": "keyword"
+        },
         "event": {
           "dynamic": true,
           "type": "object",
@@ -12083,6 +12214,9 @@
             "client_country": {
               "type": "keyword"
             },
+            "client_country_code": {
+              "type": "keyword"
+            },
             "client_geo_location": {
               "type": "geo_point"
             },
@@ -12090,6 +12224,9 @@
               "type": "keyword"
             },
             "country": {
+              "type": "keyword"
+            },
+            "country_code": {
               "type": "keyword"
             },
             "direction": {
@@ -12111,6 +12248,9 @@
               "type": "keyword"
             },
             "dst_country": {
+              "type": "keyword"
+            },
+            "dst_country_code": {
               "type": "keyword"
             },
             "dst_geo_location": {
@@ -12137,6 +12277,9 @@
             "dst_rep_tags": {
               "type": "keyword"
             },
+            "input_ifname": {
+              "type": "keyword"
+            },
             "input_snmp": {
               "type": "keyword"
             },
@@ -12148,6 +12291,9 @@
             },
             "next_hop": {
               "type": "ip"
+            },
+            "output_ifname": {
+              "type": "keyword"
             },
             "output_snmp": {
               "type": "keyword"
@@ -12174,6 +12320,9 @@
               "type": "keyword"
             },
             "server_country": {
+              "type": "keyword"
+            },
+            "server_country_code": {
               "type": "keyword"
             },
             "server_geo_location": {
@@ -12204,6 +12353,9 @@
               "type": "keyword"
             },
             "src_country": {
+              "type": "keyword"
+            },
+            "src_country_code": {
               "type": "keyword"
             },
             "src_geo_location": {
@@ -12264,6 +12416,5 @@
         }
       }
     }
-  },
-  "aliases": {}
+  }
 }
