@@ -1,5 +1,5 @@
 #------------------------------------------------------------------------------
-# Copyright (C)2018 Robert Cowart
+# Copyright (C)2019 Robert Cowart
 # 
 # The contents of this file and/or repository are subject to the Robert Cowart
 # Public License (the "License") and may not be used or distributed except in
@@ -12,7 +12,7 @@
 # the specific language governing rights and limitations under the License.
 # 
 # The Original Source Code was developed by Robert Cowart. Portions created by
-# Robert Cowart are Copyright (C)2018 Robert Cowart. All Rights Reserved.
+# Robert Cowart are Copyright (C)2019 Robert Cowart. All Rights Reserved.
 #------------------------------------------------------------------------------
 
 "1": tcpmux
@@ -95,7 +95,7 @@
 "103": gppitnp
 "104": acr-nema
 "105": csnet-ns
-"105": cso
+#"105": cso
 "106": 3com-tsmux
 "107": rtelnet
 "108": snagas
@@ -1664,7 +1664,7 @@
 "1990": stun-p1
 "1991": stun-p2
 "1992": ipsendmsg
-"1992": stun-p3
+#"1992": stun-p3
 "1993": snmp-tcp-port
 "1994": stun-port
 "1995": perf-port
@@ -2663,7 +2663,8 @@
 "2997": rebol
 "2998": realsecure
 "2999": remoteware-un
-"3000": hbci
+#"3000": hbci
+"3000": grafana
 "3001": origo-native
 "3002": exlm-agent
 "3003": cgms
@@ -4700,7 +4701,8 @@
 "6421": nim-wan
 "6432": pgbouncer
 "6442": tarp
-"6443": sun-sr-https
+#"6443": sun-sr-https
+"6443": kubernetes-api
 "6444": sge-qmaster
 "6445": sge-execd
 "6446": mysql-proxy
@@ -4765,9 +4767,9 @@
 "6655": pcs-sf-ui-man
 "6656": emgmsg
 "6665": ircu
+"6666": ircu
 "6667": ircu
 "6668": ircu
-"6669": ircu
 "6669": ircu
 "6670": vocaltec-gold
 "6671": p4p-portal
@@ -5065,9 +5067,11 @@
 "8082": us-cli
 "8083": us-srv
 "8085": hbase-rest-info
-"8086": d-s-n
+#"8086": d-s-n
+"8086": influxdb-http
 "8087": simplifymedia
-"8088": radan-http
+#"8088": radan-http
+"8088": influxdb-rpc
 #"8091": jamlink
 "8091": couchbase-admin
 "8092": couchbase-api
@@ -5189,7 +5193,8 @@
 "8880": cddbp-alt
 "8881": galaxy4d
 "8883": secure-mqtt
-"8888": ddi-tcp-1
+#"8888": ddi-tcp-1
+"8888": chronograf
 "8889": ddi-tcp-2
 "8890": ddi-tcp-3
 "8891": ddi-tcp-4
@@ -5213,7 +5218,8 @@
 "8997": oracle-ms-ens
 "8998": canto-roboflow
 "8999": bctp
-"9000": cslistener
+#"9000": cslistener
+"9000": kafka-manager
 "9001": etlservicemgr
 "9002": dynamid
 "9005": golem
@@ -5627,6 +5633,7 @@
 "18243": clusterxl
 "18262": gv-pf
 "18463": ac-cluster
+"18630": streamsets-dc-http
 "18634": rds-ib
 "18635": rds-ip
 "18668": vdmmesh
